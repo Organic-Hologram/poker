@@ -1,0 +1,503 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Poker Game API Tester</title>
+    <style>
+      .new-game-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 200px;
+      }
+      .new-game-btn:hover {
+        background: #218838;
+      }
+      .round-history {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      .round-history th,
+      .round-history td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+      }
+      .positive {
+        color: green;
+        font-weight: bold;
+      }
+      .negative {
+        color: red;
+        font-weight: bold;
+      }
+      .cards-state {
+        background: #f5f5f5;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .game-over {
+        background: #f8f9fa;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        text-align: center;
+      }
+      .new-game-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      .new-game-btn:hover {
+        background: #218838;
+      }
+      .winning-hand {
+        background: #f0f8ff;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid #007bff;
+      }
+      .winning-hand p {
+        margin: 5px 0;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .players-info {
+        background: #e9ecef;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .players-info p {
+        margin: 5px 0;
+      }
+      .final-cards {
+        margin-top: 15px;
+        padding: 10px;
+        background: #fff;
+        border-radius: 5px;
+      }
+      .final-cards h4 {
+        margin: 10px 0 5px 0;
+        color: #495057;
+      }
+      .player-final-hand {
+        margin: 10px 0;
+        padding: 5px 0;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .player-final-hand:last-child {
+        border-bottom: none;
+      }
+      .player-final-hand p {
+        margin: 3px 0;
+      }
+      .control-section {
+        display: flex;
+        gap: 20px;
+        align-items: flex-end;
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .control-group input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .control-group button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background: #007bff;
+        color: white;
+      }
+      .control-group button:hover {
+        background: #0056b3;
+      }
+      .control-group button.new-game-btn {
+        background: #28a745;
+      }
+      .control-group button.new-game-btn:hover {
+        background: #218838;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Poker Game API Tester</h2>
+
+    <div class="control-section">
+      <div class="control-group">
+        <button onclick="startNewGame()" class="new-game-btn">Start New Game</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Join Game</h3>
+        <input type="text" id="playerName" placeholder="Player Name" />
+        <button onclick="joinGame()">Join Game</button>
+      </div>
+
+      <div class="control-group">
+        <h3>Ready</h3>
+        <input type="text" id="playerId" placeholder="Player ID" />
+        <button onclick="ready()">Ready</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Game State</h3>
+      <input type="text" id="statePlayerId" placeholder="Player ID" />
+      <button onclick="getState()">Get State</button>
+
+      <div id="gameStateInfo"></div>
+    </div>
+
+    <div class="section make-move">
+      <h3>Make Move</h3>
+      <!-- Always show cards state -->
+      <div class="cards-state" id="cardsState">
+        <h4>Your Cards</h4>
+        <p id="playerCards"></p>
+
+        <h4>Table Cards</h4>
+        <p id="tableCards"></p>
+      </div>
+
+      <input type="text" id="movePlayerId" placeholder="Player ID" />
+      <select id="action">
+        <option value="call">Call</option>
+        <option value="fold">Fold</option>
+        <option value="raise">Raise</option>
+      </select>
+      <input type="number" id="amount" placeholder="Amount (for raise)" />
+      <button onclick="makeMove()">Make Move</button>
+    </div>
+
+    <div class="section">
+      <h3>API Response</h3>
+      <pre id="output"></pre>
+    </div>
+
+    <footer>
+      <h3>Round History</h3>
+      <table class="round-history" id="roundHistory">
+        <thead>
+          <tr>
+            <th>Round</th>
+            <th>Player 1</th>
+            <th>Player 2</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </footer>
+
+    <script>
+      const BASE_URL = "http://localhost:3000/api/game";
+      const output = document.getElementById("output");
+
+      // Add localStorage handling for round history
+      let roundHistory = [];
+
+      function saveRoundHistory() {
+        localStorage.setItem("pokerRoundHistory", JSON.stringify(roundHistory));
+      }
+
+      function loadRoundHistory() {
+        const saved = localStorage.getItem("pokerRoundHistory");
+        roundHistory = saved ? JSON.parse(saved) : [];
+        updateRoundHistoryDisplay();
+      }
+
+      function updateRoundHistoryDisplay() {
+        const tbody = document.querySelector("#roundHistory tbody");
+        tbody.innerHTML = roundHistory
+          .map(
+            (round) => `
+                <tr>
+                    <td>${round.number}</td>
+                    ${round.results
+                      .map(
+                        (result) => `
+                        <td class="${result > 0 ? "positive" : "negative"}">
+                            ${result > 0 ? "+" : ""}${result}
+                        </td>
+                    `,
+                      )
+                      .join("")}
+                </tr>
+            `,
+          )
+          .join("");
+      }
+
+      function updateGameState(data) {
+        const gameStateInfo = document.getElementById("gameStateInfo");
+        const playerCards = document.getElementById("playerCards");
+        const tableCards = document.getElementById("tableCards");
+
+        let html = "";
+
+        if (data.isGameOver) {
+          html += `
+                    <div class="game-over">
+                        <h3>Game Over!</h3>
+                        <div class="winning-hand">
+                            <p>Winner: ${data.winner.name} (${data.winner.chips} chips)</p>
+                            <p>Winning Hand: ${data.winningHand}</p>
+                            <p>Hand Description: ${data.handDescription}</p>
+                            <p>Final Pot: ${data.finalPot}</p>
+                            
+                            <div class="final-cards">
+                                <h4>Community Cards</h4>
+                                <p>${
+                                  data.finalCommunityCards
+                                    ? data.finalCommunityCards
+                                        .map((card) => `${card.suit}${card.rank}`)
+                                        .join(" | ")
+                                    : "No community cards"
+                                }</p>
+                                
+                                <h4>Player Hands</h4>
+                                ${data.allHands
+                                  .map(
+                                    (player) => `
+                                    <div class="player-final-hand">
+                                        <p>${player.name}'s Hand (${player.chips} chips):</p>
+                                        <p>${player.hand
+                                          .map((card) => `${card.suit}${card.rank}`)
+                                          .join(" | ")}</p>
+                                    </div>
+                                `,
+                                  )
+                                  .join("")}
+                            </div>
+                        </div>
+                        <button onclick="startNewGame()" class="new-game-btn">Start New Game</button>
+                    </div>`;
+        }
+
+        // Add players list
+        if (data.players) {
+          html += '<div class="players-info">';
+          data.players.forEach((player) => {
+            html += `<p>Player ${player.index + 1}: ${player.name} (${player.id})</p>`;
+          });
+          html += "</div>";
+        }
+
+        html += `
+                <p>Current Turn: ${data.currentPlayerName} (Player ${data.currentPlayerIndex + 1})</p>
+                <p>Pot: ${data.pot} ${
+                  data.smallBlind && data.bigBlind
+                    ? `(Small Blind: ${data.smallBlind.player} - ${data.smallBlind.amount}, 
+                      Big Blind: ${data.bigBlind.player} - ${data.bigBlind.amount})`
+                    : ""
+                }</p>
+                <p>Last Move: ${data.lastMove || "None"}</p>
+                <p>Round: ${data.gameState}</p>`;
+
+        gameStateInfo.innerHTML = html;
+
+        // Update cards state
+        if (data.playerHand) {
+          playerCards.textContent = "";
+          data.playerHand.forEach((card) => {
+            playerCards.textContent += `${card.suit}${card.rank}       |       `;
+          });
+        }
+        if (data.communityCards) {
+          tableCards.textContent = "";
+          data.communityCards.forEach((card) => {
+            tableCards.textContent += `${card.suit}${card.rank}       |       `;
+          });
+        }
+
+        // Update round history if available
+        if (data.roundHistory) {
+          roundHistory = data.roundHistory;
+          saveRoundHistory();
+          updateRoundHistoryDisplay();
+        }
+      }
+
+      // Add function to fill all player ID fields
+      function fillPlayerIdFields(playerId) {
+        document.getElementById("playerId").value = playerId;
+        document.getElementById("statePlayerId").value = playerId;
+        document.getElementById("movePlayerId").value = playerId;
+      }
+
+      async function joinGame() {
+        const playerName = document.getElementById("playerName").value;
+        try {
+          const response = await fetch(`${BASE_URL}/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ playerName }),
+          });
+          const data = await response.json();
+          output.textContent = JSON.stringify(data, null, 2);
+
+          // If join was successful, automatically fill in the player ID
+          if (data.playerId) {
+            fillPlayerIdFields(data.playerId);
+          }
+        } catch (error) {
+          output.textContent = JSON.stringify(
+            {
+              error: "Failed to join game",
+              details: error.message,
+            },
+            null,
+            2,
+          );
+        }
+      }
+
+      async function ready() {
+        const playerId = document.getElementById("playerId").value;
+        const response = await fetch(`${BASE_URL}/ready/${playerId}`, {
+          method: "POST",
+        });
+        const data = await response.json();
+        output.textContent = JSON.stringify(data, null, 2);
+        if (data.gameState) {
+          updateGameState(data.gameState);
+        }
+      }
+
+      async function getState() {
+        const playerId = document.getElementById("statePlayerId").value;
+        try {
+          const response = await fetch(`${BASE_URL}/state/${playerId}`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const contentType = response.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("Received non-JSON response from server");
+          }
+
+          const data = await response.json();
+          output.textContent = JSON.stringify(data, null, 2);
+          updateGameState(data);
+        } catch (error) {
+          output.textContent = JSON.stringify(
+            {
+              error: "Failed to get state",
+              details: error.message,
+            },
+            null,
+            2,
+          );
+        }
+      }
+
+      async function makeMove() {
+        const playerId = document.getElementById("movePlayerId").value;
+        const action = document.getElementById("action").value;
+        const amount = document.getElementById("amount").value;
+
+        try {
+          const body = { action };
+          if (action === "raise") {
+            body.amount = parseInt(amount);
+          }
+
+          const response = await fetch(`${BASE_URL}/move/${playerId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+
+          const data = await response.json();
+          output.textContent = JSON.stringify(data, null, 2);
+          if (data.gameState) {
+            updateGameState(data.gameState);
+          }
+        } catch (error) {
+          output.textContent = JSON.stringify(
+            {
+              error: "Failed to make move",
+              details: error.message,
+            },
+            null,
+            2,
+          );
+        }
+      }
+
+      async function startNewGame() {
+        try {
+          const response = await fetch(`${BASE_URL}/new-game`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+          const data = await response.json();
+
+          // Clear round history
+          roundHistory = [];
+          saveRoundHistory();
+          updateRoundHistoryDisplay();
+
+          // Clear all game state
+          document.getElementById("gameStateInfo").innerHTML = "";
+          document.getElementById("playerCards").textContent = "";
+          document.getElementById("tableCards").textContent = "";
+          document.querySelector("#roundHistory tbody").innerHTML = "";
+
+          // Clear all input fields including player IDs
+          document.getElementById("playerName").value = "";
+          fillPlayerIdFields(""); // Clear all player ID fields
+          document.getElementById("amount").value = "";
+
+          // Show success message
+          output.textContent = JSON.stringify(
+            {
+              message: "New game created. Players can now join.",
+              details: data,
+            },
+            null,
+            2,
+          );
+        } catch (error) {
+          output.textContent = JSON.stringify(
+            {
+              error: "Failed to start new game",
+              details: error.message,
+            },
+            null,
+            2,
+          );
+        }
+      }
+
+      // Load round history when page loads
+      document.addEventListener("DOMContentLoaded", loadRoundHistory);
+    </script>
+  </body>
+</html>
