@@ -1,11 +1,21 @@
 {
+  "name": "poker-game-api",
+  "version": "1.0.0",
+  "description": "A RESTful API for a two-player Texas Hold'em poker game",
+  "main": "src/server.js",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.21.2",
-    "uuid": "^11.0.5"
+    "morgan": "^1.10.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^11.0.5",
+    "winston": "^3.17.0"
   },
   "scripts": {
     "start": "node src/server.js",
+    "dev": "NODE_ENV=development node src/server.js",
     "format": "prettier --write ."
   },
   "devDependencies": {
