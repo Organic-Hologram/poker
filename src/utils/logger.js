@@ -3,7 +3,7 @@ const morgan = require("morgan");
 
 // Define log format
 const logFormat = winston.format.printf(({ level, message, timestamp, ...meta }) => {
-  return `${timestamp} [${level.toUpperCase()}]: ${message} ${
+  return `${timestamp} [${level.toUpperCase()}] ${message} ${
     Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ""
   }`;
 });
@@ -16,12 +16,17 @@ const logger = winston.createLogger({
   level: logLevel,
   format: winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    winston.format.colorize(),
+    winston.format.errors({ stack: true }),
     logFormat,
   ),
   defaultMeta: { service: "poker-game-api" },
   transports: [
-    new winston.transports.Console(),
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+        logFormat,
+      ),
+    }),
     new winston.transports.File({ filename: "logs/error.log", level: "error" }),
     new winston.transports.File({ filename: "logs/combined.log" }),
   ],

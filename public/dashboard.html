@@ -70,7 +70,8 @@
 
       .status-waiting {
         background-color: var(--yellow);
-        color: black;
+        color: #000000;
+        font-weight: bold;
       }
 
       .status-ended {
@@ -159,6 +160,7 @@
       .stats-value {
         font-size: 1.8rem;
         font-weight: bold;
+        color: var(--text-light);
       }
 
       .stats-label {
@@ -223,6 +225,134 @@
       .card-spades,
       .card-clubs {
         color: var(--text-light);
+      }
+
+      /* Fix for dropdown and other Bootstrap components in dark mode */
+      .dropdown-menu {
+        background-color: var(--bg-card);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .dropdown-item {
+        color: var(--text-light);
+      }
+
+      .dropdown-item:hover,
+      .dropdown-item:focus {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+      }
+
+      /* Modal fixes for dark mode */
+      .modal-content {
+        background-color: var(--bg-card);
+        color: var(--text-light);
+      }
+
+      .modal-header,
+      .modal-footer {
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Garantir texto branco no modal */
+      .modal-body strong,
+      .modal-body p,
+      .modal-body div,
+      .modal-title {
+        color: var(--text-light);
+      }
+
+      /* Badge text colors */
+      .badge.bg-warning {
+        color: var(--bg-dark) !important;
+      }
+
+      /* Fix for alerts in dark mode */
+      .alert {
+        color: var(--text-light);
+      }
+
+      .alert-success {
+        background-color: rgba(40, 167, 69, 0.2);
+        border-color: rgba(40, 167, 69, 0.3);
+      }
+
+      /* Fix for any potential Bootstrap text-dark usage */
+      .text-dark {
+        color: var(--text-light) !important;
+      }
+
+      /* Ajustes finais para garantir legibilidade */
+      .btn-outline-light:hover {
+        color: var(--bg-dark);
+      }
+
+      .dropdown-menu a {
+        color: var(--text-light);
+      }
+
+      small.text-muted {
+        color: var(--text-secondary) !important;
+      }
+
+      /* Estilo mais contrastante para badges */
+      .badge {
+        font-weight: bold;
+      }
+
+      /* Garantir que todo texto seja branco no dark mode */
+      #totalGames,
+      #activeGames,
+      #totalPlayers,
+      #maxPot,
+      .stats-value,
+      #noGamesMessage,
+      .modal-body p,
+      .card-body,
+      .btn,
+      input,
+      select,
+      option,
+      textarea {
+        color: var(--text-light) !important;
+      }
+
+      /* Exceções para elementos que precisam de outras cores */
+      .pot-amount {
+        color: var(--green) !important;
+      }
+
+      .status-waiting {
+        color: #000000 !important;
+      }
+
+      /* Sobrescrever estilos do Bootstrap que podem usar cores escuras */
+      .form-control,
+      .form-select {
+        background-color: var(--bg-card);
+        color: var(--text-light);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Garantir que todos os parágrafos sejam brancos */
+      p {
+        color: var(--text-light);
+      }
+
+      /* Regra global para evitar texto preto */
+      .card *,
+      .container * {
+        color: var(--text-light);
+      }
+
+      /* Exceções para regra global */
+      .status-waiting,
+      .badge.bg-warning,
+      .card a,
+      .pot-amount,
+      .card-hearts,
+      .card-diamonds {
+        color: inherit;
       }
     </style>
   </head>
@@ -307,7 +437,7 @@
                   <p class="mt-3">Carregando jogos...</p>
                 </div>
                 <div class="col-12 text-center py-5 d-none" id="noGamesMessage">
-                  <p>Nenhum jogo encontrado</p>
+                  <p class="text-light">Nenhum jogo encontrado</p>
                   <button class="btn refresh-btn mt-2" onclick="fetchAllGames()">
                     Tentar novamente
                   </button>
@@ -328,7 +458,7 @@
       aria-hidden="true"
     >
       <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark">
+        <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="gameDetailsModalLabel">Detalhes do Jogo</h5>
             <button
@@ -415,11 +545,11 @@
 
             if (games.length === 0) {
               // Se não há jogos ativos, use a simulação para demonstração
-              simulateGamesData();
+              //simulateGamesData();
             }
           } else {
             // Se a API não retornou o formato esperado, use a simulação
-            simulateGamesData();
+            // simulateGamesData();
           }
 
           updateDashboard();
@@ -427,7 +557,7 @@
         } catch (error) {
           console.error("Erro ao buscar jogos:", error);
           // Em caso de erro, use a simulação
-          simulateGamesData();
+          //simulateGamesData();
           updateDashboard();
           updateLastRefreshTime();
         }
@@ -665,7 +795,7 @@
                   .map((card) => {
                     const colorClass =
                       card.suit === "♥" || card.suit === "♦" ? "card-hearts" : "card-spades";
-                    return `<span class="${colorClass}">${card.suit}${card.rank}</span>`;
+                    return `<span class="${colorClass}">${card.rank}${card.suit}</span>`;
                   })
                   .join(" ")}
               </div>
@@ -800,7 +930,7 @@
               .map((card) => {
                 const colorClass =
                   card.suit === "♥" || card.suit === "♦" ? "card-hearts" : "card-spades";
-                return `<span class="${colorClass}">${card.suit}${card.rank}</span>`;
+                return `<span class="${colorClass}">${card.rank}${card.suit}</span>`;
               })
               .join(" ")}
           </div>
