@@ -378,14 +378,15 @@
 
       async function ready() {
         const playerId = document.getElementById("playerId").value;
-        const response = await fetch(`${BASE_URL}/ready/${playerId}`, {
-          method: "POST",
-        });
-        const data = await response.json();
-        output.textContent = JSON.stringify(data, null, 2);
-        if (data.gameState) {
-          updateGameState(data.gameState);
-        }
+        //const response = await fetch(`${BASE_URL}/ready/${playerId}`, {
+        //  method: "POST",
+        //});
+
+        //const data = await response.json();
+        //output.textContent = JSON.stringify(data, null, 2);
+        //if (data.gameState) {
+        //  updateGameState(data.gameState);
+        //}
       }
 
       async function getState() {

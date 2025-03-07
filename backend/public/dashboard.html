@@ -139,12 +139,48 @@
       }
 
       .move-item {
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background-color: var(--bg-dark);
+        margin-bottom: 8px;
+        border-radius: 4px;
+      }
+
+      .move-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .move-item strong {
+        color: var(--accent);
+      }
+
+      .text-success {
+        color: var(--green) !important;
+      }
+
+      .text-danger {
+        color: var(--red) !important;
+      }
+
+      .current-move {
+        background-color: var(--accent);
+        color: white;
+        padding: 8px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+
+      .player-bet-info {
         padding: 8px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       }
 
-      .move-item:last-child {
+      .player-bet-info:last-child {
         border-bottom: none;
+      }
+
+      .move-item strong {
+        color: var(--accent);
       }
 
       .refresh-btn {
@@ -174,6 +210,54 @@
 
       .negative-value {
         color: var(--red);
+      }
+
+      /* Room capacity indicator */
+      .room-capacity {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: var(--bg-dark);
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+      }
+
+      .capacity-warning {
+        color: var(--yellow);
+      }
+
+      .capacity-critical {
+        color: var(--red);
+      }
+
+      .capacity-ok {
+        color: var(--green);
+      }
+
+      /* Room status badges */
+      .room-status {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 8px;
+      }
+
+      .room-full {
+        background-color: var(--red);
+        color: white;
+      }
+
+      .room-available {
+        background-color: var(--green);
+        color: white;
+      }
+
+      .room-waiting {
+        background-color: var(--yellow);
+        color: black;
       }
 
       /* Loader animation */
@@ -354,6 +438,32 @@
       .card-diamonds {
         color: inherit;
       }
+
+      .player-bet-info strong {
+        color: var(--text-light);
+      }
+
+      .table {
+        color: var(--text-light);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .table-dark {
+        background-color: var(--bg-card);
+      }
+
+      .table-hover tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .table th {
+        border-top: none;
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .table td {
+        border-color: rgba(255, 255, 255, 0.1);
+      }
     </style>
   </head>
   <body>
@@ -362,9 +472,29 @@
         <div class="d-flex justify-content-between align-items-center">
           <h1>Dashboard de Poker</h1>
           <div class="d-flex align-items-center">
+            <div class="me-4">
+              <span class="badge bg-secondary"
+                >Salas: <span id="roomCount">0</span>/<span id="maxRooms">5</span></span
+              >
+            </div>
             <span class="me-3" id="lastUpdate">Última atualização: --:--:--</span>
             <button class="btn refresh-btn" id="refreshBtn">
               <i class="bi bi-arrow-clockwise"></i> Atualizar
+            </button>
+            <button
+              id="adminLoginBtn"
+              class="btn btn-outline-light me-3"
+              onclick="showAdminLogin()"
+            >
+              Admin Login
+            </button>
+            <button
+              id="adminLogoutBtn"
+              class="btn btn-outline-danger me-3"
+              onclick="logoutAdmin()"
+              style="display: none"
+            >
+              Admin Logout
             </button>
           </div>
         </div>
@@ -377,7 +507,7 @@
           <div class="card">
             <div class="card-body text-center">
               <div class="stats-value" id="totalGames">0</div>
-              <div class="stats-label">Jogos Total</div>
+              <div class="stats-label">Total de Salas</div>
             </div>
           </div>
         </div>
@@ -385,7 +515,15 @@
           <div class="card">
             <div class="card-body text-center">
               <div class="stats-value" id="activeGames">0</div>
-              <div class="stats-label">Jogos Ativos</div>
+              <div class="stats-label">Salas Ativas</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-body text-center">
+              <div class="stats-value" id="availableGames">0</div>
+              <div class="stats-label">Salas Disponíveis</div>
             </div>
           </div>
         </div>
@@ -393,15 +531,42 @@
           <div class="card">
             <div class="card-body text-center">
               <div class="stats-value" id="totalPlayers">0</div>
-              <div class="stats-label">Agentes Jogando</div>
+              <div class="stats-label">Jogadores Online</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-body text-center">
+              <div class="stats-value" id="totalGamesPlayed">0</div>
+              <div class="stats-label">Total de Jogos Realizados</div>
             </div>
           </div>
         </div>
         <div class="col-md-3">
           <div class="card">
             <div class="card-body text-center">
-              <div class="stats-value" id="maxPot">0</div>
+              <div class="stats-value" id="totalHandsPlayed">0</div>
+              <div class="stats-label">Mãos Jogadas</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-body text-center">
+              <div class="stats-value" id="biggestPot">0</div>
               <div class="stats-label">Maior Pot</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-body text-center">
+              <div class="stats-value" id="averageGameTime">0</div>
+              <div class="stats-label">Tempo Médio de Jogo</div>
             </div>
           </div>
         </div>
@@ -411,7 +576,7 @@
         <div class="col-12">
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <span>Jogos Ativos</span>
+              <span>Salas de Jogo</span>
               <div class="dropdown">
                 <button
                   class="btn btn-sm btn-outline-light dropdown-toggle"
@@ -423,10 +588,10 @@
                   Filtrar por
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="filterDropdown">
-                  <li><a class="dropdown-item" href="#" data-filter="all">Todos</a></li>
-                  <li><a class="dropdown-item" href="#" data-filter="active">Ativos</a></li>
-                  <li><a class="dropdown-item" href="#" data-filter="waiting">Aguardando</a></li>
-                  <li><a class="dropdown-item" href="#" data-filter="ended">Finalizados</a></li>
+                  <li><a class="dropdown-item" href="#" data-filter="all">Todas</a></li>
+                  <li><a class="dropdown-item" href="#" data-filter="active">Ativas</a></li>
+                  <li><a class="dropdown-item" href="#" data-filter="available">Disponíveis</a></li>
+                  <li><a class="dropdown-item" href="#" data-filter="ended">Finalizadas</a></li>
                 </ul>
               </div>
             </div>
@@ -434,14 +599,96 @@
               <div id="gamesContainer" class="row">
                 <div class="col-12 text-center py-5" id="loadingIndicator">
                   <span class="loader"></span>
-                  <p class="mt-3">Carregando jogos...</p>
+                  <p class="mt-3">Carregando salas...</p>
                 </div>
                 <div class="col-12 text-center py-5 d-none" id="noGamesMessage">
-                  <p class="text-light">Nenhum jogo encontrado</p>
+                  <p class="text-light">Nenhuma sala encontrada</p>
                   <button class="btn refresh-btn mt-2" onclick="fetchAllGames()">
                     Tentar novamente
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Histórico de Jogos</span>
+              <div class="dropdown">
+                <button
+                  class="btn btn-sm btn-outline-light dropdown-toggle"
+                  type="button"
+                  id="historyFilterDropdown"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Filtrar por
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="historyFilterDropdown">
+                  <li><a class="dropdown-item" href="#" data-history-filter="all">Todos</a></li>
+                  <li><a class="dropdown-item" href="#" data-history-filter="today">Hoje</a></li>
+                  <li>
+                    <a class="dropdown-item" href="#" data-history-filter="week">Última Semana</a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="#" data-history-filter="month">Último Mês</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                  <thead>
+                    <tr>
+                      <th>ID do Jogo</th>
+                      <th>Data</th>
+                      <th>Jogadores</th>
+                      <th>Vencedor</th>
+                      <th>Pot Final</th>
+                      <th>Mão Vencedora</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gameHistoryTableBody">
+                    <!-- Preenchido via JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4" id="adminSection" style="display: none">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Gerenciamento de API Keys (Admin)</span>
+              <button class="btn btn-sm btn-success" onclick="showNewKeyModal()">
+                <i class="bi bi-plus"></i> Nova API Key
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                  <thead>
+                    <tr>
+                      <th>Bot Name</th>
+                      <th>API Key</th>
+                      <th>Criado em</th>
+                      <th>Último uso</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="apiKeysTableBody">
+                    <!-- Preenchido via JavaScript -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -460,7 +707,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="gameDetailsModalLabel">Detalhes do Jogo</h5>
+            <h5 class="modal-title" id="gameDetailsModalLabel">Detalhes da Sala</h5>
             <button
               type="button"
               class="btn-close btn-close-white"
@@ -477,37 +724,139 @@
       </div>
     </div>
 
+    <!-- Adicionar novo modal para detalhes do histórico -->
+    <div class="modal fade" id="historyDetailsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalhes do Jogo Histórico</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="historyDetailsContent"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Login Admin -->
+    <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Login Administrativo</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="adminKey">Chave Admin:</label>
+              <input
+                type="password"
+                class="form-control"
+                id="adminKey"
+                placeholder="Digite a chave admin"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-primary" onclick="loginAdmin()">Login</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Nova API Key -->
+    <div class="modal fade" id="newKeyModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Gerar Nova API Key</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="botName">Nome do Bot:</label>
+              <input
+                type="text"
+                class="form-control"
+                id="botName"
+                placeholder="Digite o nome do bot"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-primary" onclick="generateApiKey()">Gerar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       // Configuração
-      const API_URL = "http://localhost:3001/api/game";
+      const BASE_URL = "http://localhost:3001/api";
+      const API_URL = `${BASE_URL}/game`;
+      const AUTH_URL = `${BASE_URL}/auth`;
       const REFRESH_INTERVAL = 5000; // 5 segundos
 
       // Estado da aplicação
       let games = [];
+      let maxRooms = 5;
       let refreshInterval;
+      let gameHistory = [];
+      let adminKey = null;
 
       // Elementos DOM
       const gamesContainer = document.getElementById("gamesContainer");
       const loadingIndicator = document.getElementById("loadingIndicator");
       const noGamesMessage = document.getElementById("noGamesMessage");
       const lastUpdateElement = document.getElementById("lastUpdate");
+      const roomCountElement = document.getElementById("roomCount");
+      const maxRoomsElement = document.getElementById("maxRooms");
       const statsElements = {
         totalGames: document.getElementById("totalGames"),
         activeGames: document.getElementById("activeGames"),
+        availableGames: document.getElementById("availableGames"),
         totalPlayers: document.getElementById("totalPlayers"),
-        maxPot: document.getElementById("maxPot"),
       };
 
       // Inicialização
       document.addEventListener("DOMContentLoaded", () => {
         fetchAllGames();
+        fetchGameHistory();
+        fetchGameStats();
 
-        // Iniciar atualização automática
-        refreshInterval = setInterval(fetchAllGames, REFRESH_INTERVAL);
+        // Configurar atualizações periódicas
+        refreshInterval = setInterval(() => {
+          fetchAllGames();
+          fetchGameHistory(); // Atualiza também o histórico periodicamente
+        }, REFRESH_INTERVAL);
 
-        // Botão de atualização manual
-        document.getElementById("refreshBtn").addEventListener("click", fetchAllGames);
+        // Configurar botão de atualização
+        document.getElementById("refreshBtn").addEventListener("click", () => {
+          fetchAllGames();
+          fetchGameHistory(); // Atualiza também o histórico ao clicar no botão
+          fetchGameStats();
+        });
 
         // Configurar filtros
         document.querySelectorAll("[data-filter]").forEach((elem) => {
@@ -516,216 +865,60 @@
             filterGames(e.target.dataset.filter);
           });
         });
+
+        // Check for stored admin key
+        const storedAdminKey = localStorage.getItem("adminKey");
+        if (storedAdminKey) {
+          // Validate the stored key
+          fetch(`${AUTH_URL}/keys`, {
+            headers: {
+              "x-admin-key": storedAdminKey,
+            },
+          })
+            .then((response) => {
+              if (response.ok) {
+                adminKey = storedAdminKey;
+                document.getElementById("adminSection").style.display = "block";
+                document.getElementById("adminLoginBtn").style.display = "none";
+                document.getElementById("adminLogoutBtn").style.display = "inline-block";
+                loadApiKeys();
+              } else {
+                // If stored key is invalid, remove it
+                localStorage.removeItem("adminKey");
+              }
+            })
+            .catch(() => {
+              // If there's an error, remove the stored key
+              localStorage.removeItem("adminKey");
+            });
+        }
       });
 
       // Buscar todos os jogos ativos da API
       async function fetchAllGames() {
         try {
-          // Tentar obter dados reais da API
           const response = await fetch(`${API_URL}/games`);
           const data = await response.json();
 
           if (data.games && Array.isArray(data.games)) {
-            // Se a API retornou dados reais, usamos eles
-            games = data.games.map((game) => {
-              // Adicione moveHistory se não existir na resposta da API
-              if (!game.moveHistory) {
-                game.moveHistory = [];
-              }
-              // Adicione lastUpdateTime se não existir
-              if (!game.lastUpdateTime) {
-                game.lastUpdateTime = new Date().toISOString();
-              }
-              // Adicione lastMove se não existir
-              if (!game.lastMove) {
-                game.lastMove = "Sem movimentos registrados";
-              }
-              return game;
-            });
+            games = data.games;
+            updateDashboard();
+            updateLastRefreshTime();
 
-            if (games.length === 0) {
-              // Se não há jogos ativos, use a simulação para demonstração
-              //simulateGamesData();
-            }
-          } else {
-            // Se a API não retornou o formato esperado, use a simulação
-            // simulateGamesData();
+            // Atualizar contadores de sala
+            roomCountElement.textContent = games.length;
+            maxRoomsElement.textContent = maxRooms;
           }
-
-          updateDashboard();
-          updateLastRefreshTime();
         } catch (error) {
           console.error("Erro ao buscar jogos:", error);
-          // Em caso de erro, use a simulação
-          //simulateGamesData();
-          updateDashboard();
-          updateLastRefreshTime();
-        }
-      }
-
-      // Função que simula dados de jogos para demonstração
-      // Na implementação real, isso seria substituído pela chamada API
-      function simulateGamesData() {
-        // Adicionamos dados aleatórios para demonstração
-        const gameStates = ["waiting", "preflop", "flop", "turn", "river", "showdown", "game_over"];
-        const agentNames = [
-          "DeepStack",
-          "PokerBot",
-          "AI-Bluffer",
-          "RLAgent",
-          "MonteCarlo",
-          "GTO-Solver",
-          "Q-Learner",
-          "NeuralPoker",
-        ];
-
-        // Se já temos jogos, apenas atualizamos alguns deles para simular mudanças
-        if (games.length > 0) {
-          games.forEach((game) => {
-            // 20% chance de atualizar o estado do jogo
-            if (Math.random() < 0.2) {
-              const currentIndex = gameStates.indexOf(game.gameState);
-              if (currentIndex < gameStates.length - 1) {
-                game.gameState = gameStates[currentIndex + 1];
-              }
-
-              // Atualizar o pot
-              game.pot += Math.floor(Math.random() * 50);
-
-              // Atualizar última jogada
-              const actions = ["call", "raise", "fold"];
-              const randomAction = actions[Math.floor(Math.random() * actions.length)];
-              const randomPlayer = game.players[Math.floor(Math.random() * game.players.length)];
-
-              game.lastMove = `${randomPlayer.name} fez ${randomAction} ${randomAction === "raise" ? "de " + Math.floor(Math.random() * 100) : ""}`;
-              game.lastUpdateTime = new Date().toISOString();
-
-              // Adicionar à movimentação
-              game.moveHistory.unshift({
-                player: randomPlayer.name,
-                action: randomAction,
-                amount: randomAction === "raise" ? Math.floor(Math.random() * 100) : 0,
-                time: new Date().toISOString(),
-              });
-
-              // Limitar histórico
-              if (game.moveHistory.length > 10) {
-                game.moveHistory.pop();
-              }
-            }
-          });
-
-          // 10% chance de adicionar um novo jogo
-          if (Math.random() < 0.1 && games.length < 10) {
-            addRandomGame();
-          }
-
-          // 5% chance de finalizar um jogo ativo
-          const activeGames = games.filter((g) => g.gameState !== "game_over");
-          if (activeGames.length > 0 && Math.random() < 0.05) {
-            const randomGame = activeGames[Math.floor(Math.random() * activeGames.length)];
-            const winner =
-              randomGame.players[Math.floor(Math.random() * randomGame.players.length)];
-            randomGame.gameState = "game_over";
-            randomGame.winner = winner;
-            randomGame.finalPot = randomGame.pot;
-            randomGame.lastMove = `${winner.name} venceu o jogo com ${generateRandomHand()}`;
-          }
-        } else {
-          // Inicialmente, criar alguns jogos aleatórios
-          const numberOfGames = 3 + Math.floor(Math.random() * 4); // 3-6 jogos
-
-          for (let i = 0; i < numberOfGames; i++) {
-            addRandomGame();
-          }
-        }
-
-        function addRandomGame() {
-          // Criar jogadores para este jogo
-          const numberOfPlayers = 2; // Nossa API de poker é 2 jogadores
-          const players = [];
-
-          for (let j = 0; j < numberOfPlayers; j++) {
-            const name = agentNames[Math.floor(Math.random() * agentNames.length)];
-            players.push({
-              id: `player-${Date.now()}-${j}`,
-              name: `${name}-${Math.floor(Math.random() * 1000)}`,
-              chips: 800 + Math.floor(Math.random() * 400),
-              index: j,
-            });
-          }
-
-          const gameState = gameStates[Math.floor(Math.random() * (gameStates.length - 1))]; // Evitar game_over no início
-
-          const game = {
-            id: `game-${Date.now()}`,
-            players: players,
-            gameState: gameState,
-            pot: Math.floor(Math.random() * 200),
-            currentPlayerIndex: Math.floor(Math.random() * numberOfPlayers),
-            communityCards:
-              gameState === "waiting" || gameState === "preflop"
-                ? []
-                : generateRandomCommunityCards(gameState),
-            lastMove: "Jogo iniciado",
-            moveHistory: [
-              {
-                player: "Sistema",
-                action: "start",
-                amount: 0,
-                time: new Date().toISOString(),
-              },
-            ],
-            createdAt: new Date().toISOString(),
-            lastUpdateTime: new Date().toISOString(),
-          };
-
-          games.push(game);
-        }
-
-        function generateRandomCommunityCards(gameState) {
-          const suits = ["♠", "♣", "♥", "♦"];
-          const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
-          const cards = [];
-
-          let cardCount = 0;
-          if (gameState === "flop") cardCount = 3;
-          else if (gameState === "turn") cardCount = 4;
-          else if (gameState === "river" || gameState === "showdown" || gameState === "game_over")
-            cardCount = 5;
-
-          for (let i = 0; i < cardCount; i++) {
-            const suit = suits[Math.floor(Math.random() * suits.length)];
-            const rank = ranks[Math.floor(Math.random() * ranks.length)];
-            cards.push({ suit, rank });
-          }
-
-          return cards;
-        }
-
-        function generateRandomHand() {
-          const hands = [
-            "Par de Ases",
-            "Dois Pares (Reis e Damas)",
-            "Trinca de 10",
-            "Straight (sequência)",
-            "Flush",
-            "Full House",
-            "Quadra de 7",
-            "Straight Flush",
-            "Royal Flush",
-          ];
-
-          return hands[Math.floor(Math.random() * hands.length)];
+          showErrorMessage();
         }
       }
 
       // Atualizar toda a interface do dashboard com os dados mais recentes
       function updateDashboard() {
-        // Ocultar mensagem de carregamento
         loadingIndicator.classList.add("d-none");
 
-        // Mostrar "sem jogos" se não houver jogos
         if (games.length === 0) {
           noGamesMessage.classList.remove("d-none");
           return;
@@ -733,44 +926,51 @@
           noGamesMessage.classList.add("d-none");
         }
 
-        // Atualizar estatísticas
         updateStatistics();
-
-        // Renderizar lista de jogos
         renderGames();
       }
 
       // Renderizar todos os jogos no container
       function renderGames(filter = "all") {
-        // Armazenar os IDs dos jogos atualmente exibidos para animação de atualização
         const currentGameIds = new Set(
           Array.from(document.querySelectorAll(".game-card")).map((el) => el.dataset.gameId),
         );
 
-        // Filtrar jogos conforme necessário
         let filteredGames = games;
         if (filter === "active") {
           filteredGames = games.filter(
             (g) => g.gameState !== "waiting" && g.gameState !== "game_over",
           );
-        } else if (filter === "waiting") {
-          filteredGames = games.filter((g) => g.gameState === "waiting");
+        } else if (filter === "available") {
+          filteredGames = games.filter((g) => g.players.length < 2 && g.gameState === "waiting");
         } else if (filter === "ended") {
           filteredGames = games.filter((g) => g.gameState === "game_over");
         }
 
-        // Preparar HTML para todos os jogos
         let gamesHTML = "";
 
         filteredGames.forEach((game) => {
           const isEnded = game.gameState === "game_over";
           const isWaiting = game.gameState === "waiting";
+          const isFull = game.players.length === 2;
+
           const statusClass = isEnded
             ? "status-ended"
             : isWaiting
               ? "status-waiting"
               : "status-active";
           const statusText = isEnded ? "Finalizado" : isWaiting ? "Aguardando" : "Ativo";
+
+          const roomStatusClass = isFull
+            ? "room-full"
+            : game.players.length === 0
+              ? "room-available"
+              : "room-waiting";
+          const roomStatusText = isFull
+            ? "Sala Cheia"
+            : game.players.length === 0
+              ? "Disponível"
+              : "Aguardando Jogador";
 
           const gameStateText = {
             waiting: "Aguardando Jogadores",
@@ -782,61 +982,33 @@
             game_over: "Jogo Finalizado",
           }[game.gameState];
 
-          const currentPlayer = game.players[game.currentPlayerIndex] || { name: "?" };
-
-          // Gerar HTML para cartas comunitárias
-          let communityCardsHTML = "";
-          if (game.communityCards && game.communityCards.length > 0) {
-            communityCardsHTML = `
-            <div class="card-pool">
-              <h6>Cartas na Mesa</h6>
-              <div class="card-display">
-                ${game.communityCards
-                  .map((card) => {
-                    const colorClass =
-                      card.suit === "♥" || card.suit === "♦" ? "card-hearts" : "card-spades";
-                    return `<span class="${colorClass}">${card.rank}${card.suit}</span>`;
-                  })
-                  .join(" ")}
-              </div>
-            </div>
-          `;
-          }
-
-          // Gerar informação do vencedor se o jogo terminou
-          let winnerInfo = "";
-          if (isEnded && game.winner) {
-            winnerInfo = `
-            <div class="alert alert-success mt-2">
-              <strong>${game.winner.name}</strong> venceu o jogo com pot de <strong>${game.finalPot}</strong> fichas!
-            </div>
-          `;
-          }
-
-          // Criar o card do jogo
           gamesHTML += `
           <div class="col-md-6 col-lg-4" id="game-card-${game.id}">
             <div class="card game-card h-100" data-game-id="${game.id}">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Jogo #${game.id.substring(0, 8)}</span>
+                <div>
+                  <span>Sala #${game.id.substring(0, 8)}</span>
+                  <span class="room-status ${roomStatusClass}">${roomStatusText}</span>
+                </div>
                 <span class="game-status ${statusClass}">${statusText}</span>
               </div>
               <div class="card-body">
                 <div class="d-flex justify-content-between mb-3">
                   <div><strong>Estado:</strong> ${gameStateText}</div>
-                  <div><strong>Pot:</strong> <span class="pot-amount">${game.pot}</span></div>
+                  <div><strong>Pot:</strong> <span class="pot-amount">${game.pot || 0}</span></div>
                 </div>
                 
-                ${communityCardsHTML}
-                
-                <h6 class="mb-3">Jogadores</h6>
+                <h6 class="mb-3">Jogadores (${game.players.length}/2)</h6>
                 ${game.players
                   .map(
                     (player, idx) => `
-                  <div class="player-info ${idx === game.currentPlayerIndex && !isEnded ? "bg-dark rounded p-2" : ""}">
+                  <div class="player-info">
                     <div class="player-avatar">${player.name.charAt(0)}</div>
                     <div class="player-stats">
-                      <p class="player-name">${player.name} ${idx === game.currentPlayerIndex && !isEnded ? '<span class="badge bg-warning text-dark">Turno</span>' : ""}</p>
+                      <p class="player-name">
+                        ${player.name}
+                        ${player.isReady ? '<span class="badge bg-success">Pronto</span>' : '<span class="badge bg-warning text-dark">Aguardando</span>'}
+                      </p>
                       <p class="player-chips">Fichas: ${player.chips}</p>
                     </div>
                   </div>
@@ -844,11 +1016,15 @@
                   )
                   .join("")}
                 
-                ${winnerInfo}
-                
-                <div class="mt-3">
-                  <strong>Última ação:</strong> ${game.lastMove}
-                </div>
+                ${
+                  game.players.length < 2
+                    ? `
+                  <div class="alert alert-info mt-3">
+                    Aguardando mais jogadores...
+                  </div>
+                `
+                    : ""
+                }
               </div>
               <div class="card-footer text-center">
                 <button class="btn btn-sm btn-outline-light" onclick="showGameDetails('${game.id}')">Ver Detalhes</button>
@@ -858,10 +1034,9 @@
         `;
         });
 
-        // Atualizar o container
         gamesContainer.innerHTML =
           gamesHTML ||
-          '<div class="col-12 text-center py-5"><p>Nenhum jogo encontrado com este filtro</p></div>';
+          '<div class="col-12 text-center py-5"><p>Nenhuma sala encontrada com este filtro</p></div>';
 
         // Animar novos jogos
         games.forEach((game) => {
@@ -869,9 +1044,7 @@
             const element = document.querySelector(`.game-card[data-game-id="${game.id}"]`);
             if (element) {
               element.classList.add("highlight-update");
-              setTimeout(() => {
-                element.classList.remove("highlight-update");
-              }, 2000);
+              setTimeout(() => element.classList.remove("highlight-update"), 2000);
             }
           }
         });
@@ -885,26 +1058,37 @@
         const activeGames = games.filter(
           (g) => g.gameState !== "waiting" && g.gameState !== "game_over",
         ).length;
+        const availableGames = games.filter(
+          (g) => g.players.length < 2 && g.gameState === "waiting",
+        ).length;
 
-        // Contagem única de jogadores (considerando que o mesmo agente pode estar em vários jogos)
+        // Contagem única de jogadores
         const uniquePlayers = new Set();
         games.forEach((game) => {
           game.players.forEach((player) => {
-            uniquePlayers.add(player.name);
+            uniquePlayers.add(player.id);
           });
         });
-
-        // Encontrar o maior pot
-        const maxPot = Math.max(...games.map((g) => g.pot));
 
         // Atualizar elementos na interface
         statsElements.totalGames.textContent = totalGames;
         statsElements.activeGames.textContent = activeGames;
+        statsElements.availableGames.textContent = availableGames;
         statsElements.totalPlayers.textContent = uniquePlayers.size;
-        statsElements.maxPot.textContent = maxPot;
+
+        // Atualizar indicador de capacidade
+        const capacityPercentage = (totalGames / maxRooms) * 100;
+        const capacityClass =
+          capacityPercentage >= 90
+            ? "capacity-critical"
+            : capacityPercentage >= 70
+              ? "capacity-warning"
+              : "capacity-ok";
+
+        roomCountElement.className = capacityClass;
       }
 
-      // Exibir detalhes de um jogo específico
+      // Função para mostrar detalhes do jogo
       function showGameDetails(gameId) {
         const game = games.find((g) => g.id === gameId);
         if (!game) return;
@@ -922,115 +1106,193 @@
           game_over: "Jogo Finalizado",
         }[game.gameState];
 
+        // Formatar cartas comunitárias
         let communityCardsHTML = "<p>Nenhuma carta na mesa ainda</p>";
-        if (game.communityCards && game.communityCards.length > 0) {
+        const cardsToShow = game.isGameOver ? game.finalCommunityCards : game.communityCards;
+        if (cardsToShow && cardsToShow.length > 0) {
           communityCardsHTML = `
-          <div class="card-display">
-            ${game.communityCards
-              .map((card) => {
-                const colorClass =
-                  card.suit === "♥" || card.suit === "♦" ? "card-hearts" : "card-spades";
-                return `<span class="${colorClass}">${card.rank}${card.suit}</span>`;
-              })
-              .join(" ")}
-          </div>
-        `;
-        }
-
-        // Histórico de movimentos
-        let movesHTML = "";
-        if (game.moveHistory && game.moveHistory.length > 0) {
-          movesHTML = game.moveHistory
-            .map((move) => {
-              const time = new Date(move.time).toLocaleTimeString();
-              let actionText = "";
-
-              switch (move.action) {
-                case "call":
-                  actionText = "pagou";
-                  break;
-                case "raise":
-                  actionText = `aumentou para ${move.amount}`;
-                  break;
-                case "fold":
-                  actionText = "desistiu";
-                  break;
-                case "start":
-                  actionText = "iniciou o jogo";
-                  break;
-                default:
-                  actionText = move.action;
-              }
-
-              return `
-            <div class="move-item">
-              <small class="text-muted">${time}</small>
-              <div><strong>${move.player}</strong> ${actionText}</div>
+            <div class="card-display">
+              ${cardsToShow
+                .map((card) => {
+                  const colorClass =
+                    card.suit === "♥" || card.suit === "♦" ? "card-hearts" : "card-spades";
+                  return `<span class="${colorClass}">${card.rank}${card.suit}</span>`;
+                })
+                .join(" ")}
             </div>
           `;
-            })
-            .join("");
-        } else {
-          movesHTML = '<p class="text-center">Nenhuma jogada registrada ainda</p>';
         }
 
-        // Montar conteúdo do modal
-        gameDetailsContent.innerHTML = `
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card">
-              <div class="card-header">Informações do Jogo</div>
-              <div class="card-body">
-                <p><strong>ID:</strong> ${game.id}</p>
-                <p><strong>Estado:</strong> ${gameStateText}</p>
-                <p><strong>Pot Atual:</strong> ${game.pot}</p>
-                <p><strong>Jogador Atual:</strong> ${game.players[game.currentPlayerIndex]?.name || "N/A"}</p>
-                <p><strong>Criado em:</strong> ${new Date(game.createdAt).toLocaleString()}</p>
-                <p><strong>Última atualização:</strong> ${new Date(game.lastUpdateTime).toLocaleString()}</p>
-              </div>
-            </div>
-            
-            <div class="card mt-3">
-              <div class="card-header">Jogadores</div>
-              <div class="card-body">
-                ${game.players
-                  .map(
-                    (player, idx) => `
-                  <div class="player-info p-2 ${idx === game.currentPlayerIndex && game.gameState !== "game_over" ? "bg-dark rounded" : ""}">
-                    <div class="player-avatar">${player.name.charAt(0)}</div>
-                    <div class="player-stats">
-                      <p class="player-name mb-1">${player.name} ${game.winner && game.winner.id === player.id ? '<span class="badge bg-success">Vencedor</span>' : ""}</p>
-                      <p class="player-chips mb-0">Fichas: ${player.chips}</p>
+        // Formatar jogadas atuais
+        let currentMovesHTML = "";
+        if (!game.isGameOver && game.gameState !== "waiting") {
+          const currentPlayer = game.players[game.currentPlayerIndex];
+          if (currentPlayer) {
+            currentMovesHTML = `
+              <div class="card mt-3">
+                <div class="card-header">Jogada Atual</div>
+                <div class="card-body">
+                  <p><strong>Jogador da vez:</strong> ${currentPlayer.name}</p>
+                  <p><strong>Última ação:</strong> ${formatAction(game.lastAction, game.lastRaiseAmount)}</p>
+                  <p><strong>Aposta atual:</strong> ${game.currentBet}</p>
+                  ${game.players
+                    .map(
+                      (player) => `
+                    <div class="player-bet-info">
+                      <strong>${player.name}:</strong> 
+                      ${
+                        player.isFolded
+                          ? '<span class="text-danger">Desistiu</span>'
+                          : `Apostou ${player.currentBet}`
+                      }
                     </div>
+                  `,
+                    )
+                    .join("")}
+                </div>
+              </div>
+            `;
+          } else {
+            currentMovesHTML = `
+              <div class="card mt-3">
+                <div class="card-header">Jogada Atual</div>
+                <div class="card-body">
+                  <p>Informações da jogada atual não disponíveis</p>
+                </div>
+              </div>
+            `;
+          }
+        }
+
+        // Formatar histórico de rodadas
+        let roundHistoryHTML = "";
+        if (game.roundHistory && game.roundHistory.length > 0) {
+          roundHistoryHTML = `
+            <div class="card mt-3">
+              <div class="card-header">Histórico de Rodadas</div>
+              <div class="card-body move-history">
+                ${game.roundHistory
+                  .map(
+                    (round, index) => `
+                  <div class="move-item">
+                    <strong>Rodada ${round.number}</strong><br>
+                    ${game.players
+                      .map(
+                        (player, playerIndex) => `
+                      ${player.name}: ${formatChipsChange(round.results[playerIndex])}
+                    `,
+                      )
+                      .join("<br>")}
                   </div>
-                  ${idx < game.players.length - 1 ? '<hr class="my-2">' : ""}
                 `,
                   )
                   .join("")}
               </div>
             </div>
-          </div>
-          
-          <div class="col-md-6">
-            <div class="card">
-              <div class="card-header">Cartas na Mesa</div>
-              <div class="card-body text-center">
-                ${communityCardsHTML}
+          `;
+        }
+
+        // Montar conteúdo do modal
+        gameDetailsContent.innerHTML = `
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">Informações do Jogo</div>
+                <div class="card-body">
+                  <p><strong>ID:</strong> ${game.id}</p>
+                  <p><strong>Estado:</strong> ${gameStateText}</p>
+                  <p><strong>Pot Atual:</strong> ${game.pot}</p>
+                  <p><strong>Jogador Atual:</strong> ${game.players[game.currentPlayerIndex]?.name || "N/A"}</p>
+                  <p><strong>Criado em:</strong> ${new Date(game.createdAt).toLocaleString()}</p>
+                  <p><strong>Última atualização:</strong> ${new Date(game.lastUpdateTime).toLocaleString()}</p>
+                </div>
+              </div>
+              
+              <div class="card mt-3">
+                <div class="card-header">Jogadores</div>
+                <div class="card-body">
+                  ${game.players
+                    .map(
+                      (player, idx) => `
+                    <div class="player-info p-2 ${idx === game.currentPlayerIndex && game.gameState !== "game_over" ? "bg-dark rounded" : ""}">
+                      <div class="player-avatar">${player.name.charAt(0)}</div>
+                      <div class="player-stats">
+                        <p class="player-name mb-1">
+                          ${player.name} 
+                          ${
+                            game.winner && game.winner.id === player.id
+                              ? '<span class="badge bg-success">Vencedor</span>'
+                              : ""
+                          }
+                        </p>
+                        <p class="player-chips mb-0">Fichas: ${player.chips}</p>
+                      </div>
+                    </div>
+                    ${idx < game.players.length - 1 ? '<hr class="my-2">' : ""}
+                  `,
+                    )
+                    .join("")}
+                </div>
               </div>
             </div>
             
-            <div class="card mt-3">
-              <div class="card-header">Histórico de Jogadas</div>
-              <div class="card-body move-history">
-                ${movesHTML}
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">Cartas na Mesa</div>
+                <div class="card-body text-center">
+                  ${communityCardsHTML}
+                </div>
               </div>
+              
+              ${currentMovesHTML}
+              ${roundHistoryHTML}
+
+              ${
+                game.isGameOver && game.winner
+                  ? `
+                <div class="card mt-3">
+                  <div class="card-header">Resultado Final</div>
+                  <div class="card-body">
+                    <p><strong>Vencedor:</strong> ${game.winner?.name || "Desconhecido"}</p>
+                    <p><strong>Mão vencedora:</strong> ${game.winner?.winningHand || "Não disponível"}</p>
+                    <p><strong>Descrição:</strong> ${game.winner?.handDescription || "Não disponível"}</p>
+                    <p><strong>Pot final:</strong> ${game.finalPot || 0}</p>
+                  </div>
+                </div>
+              `
+                  : ""
+              }
             </div>
           </div>
-        </div>
-      `;
+        `;
 
         // Mostrar o modal
         gameDetailsModal.show();
+      }
+
+      // Função auxiliar para formatar ações
+      function formatAction(action, amount) {
+        if (!action) return "Nenhuma";
+        switch (action.toLowerCase()) {
+          case "fold":
+            return "Desistiu";
+          case "call":
+            return "Pagou";
+          case "raise":
+            return `Aumentou para ${amount}`;
+          default:
+            return action;
+        }
+      }
+
+      // Função auxiliar para formatar mudanças de fichas
+      function formatChipsChange(change) {
+        if (change > 0) {
+          return `<span class="text-success">+${change}</span>`;
+        } else if (change < 0) {
+          return `<span class="text-danger">${change}</span>`;
+        }
+        return "0";
       }
 
       // Filtrar jogos por status
@@ -1039,10 +1301,10 @@
 
         // Atualizar texto do dropdown
         const filterText = {
-          all: "Todos",
-          active: "Ativos",
+          all: "Todas",
+          active: "Ativas",
           waiting: "Aguardando",
-          ended: "Finalizados",
+          ended: "Finalizadas",
         }[filter];
 
         document.getElementById("filterDropdown").textContent = `Filtrar por: ${filterText}`;
@@ -1058,6 +1320,508 @@
       function showErrorMessage() {
         loadingIndicator.classList.add("d-none");
         noGamesMessage.classList.remove("d-none");
+      }
+
+      // Função para buscar histórico de jogos
+      async function fetchGameHistory() {
+        try {
+          console.log("Iniciando busca de histórico de jogos...");
+          const response = await fetch(`${API_URL}/game-history`);
+
+          if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log("Dados de histórico recebidos:", data);
+
+          // Verificar se a estrutura dos dados está correta
+          if (!data || !data.history) {
+            console.error("Formato de resposta inválido:", data);
+            gameHistory = [];
+            document.getElementById("gameHistoryTableBody").innerHTML =
+              '<tr><td colspan="7" class="text-center">Erro ao carregar histórico: formato de dados inválido</td></tr>';
+            return;
+          }
+
+          gameHistory = data.history;
+          console.log(`Encontrados ${gameHistory.length} jogos no histórico.`);
+
+          updateHistoryTable();
+          updateHistoryStats();
+        } catch (error) {
+          console.error("Erro ao buscar histórico:", error);
+          document.getElementById("gameHistoryTableBody").innerHTML =
+            `<tr><td colspan="7" class="text-center">Erro ao carregar histórico: ${error.message}</td></tr>`;
+        }
+      }
+
+      // Função para atualizar estatísticas do histórico
+      function updateHistoryStats() {
+        if (!gameHistory.length) return;
+
+        const totalGames = gameHistory.length;
+        const totalHands = gameHistory.reduce(
+          (acc, game) => acc + (game.roundHistory?.length || 0),
+          0,
+        );
+        const biggestPot = Math.max(...gameHistory.map((game) => game.finalPot || 0));
+
+        // Calcular tempo médio dos jogos
+        const gameTimes = gameHistory.map((game) => {
+          const start = new Date(game.createdAt);
+          const end = new Date(game.endedAt);
+          return (end - start) / 1000; // em segundos
+        });
+        const averageTime = gameTimes.reduce((acc, time) => acc + time, 0) / gameTimes.length;
+
+        document.getElementById("totalGamesPlayed").textContent = totalGames;
+        document.getElementById("totalHandsPlayed").textContent = totalHands;
+        document.getElementById("biggestPot").textContent = biggestPot;
+        document.getElementById("averageGameTime").textContent = formatTime(averageTime);
+      }
+
+      // Função para atualizar tabela de histórico
+      function updateHistoryTable(filter = "all") {
+        const tbody = document.getElementById("gameHistoryTableBody");
+        let filteredHistory = [...gameHistory];
+
+        // Verificar se o histórico está vazio
+        if (!gameHistory || gameHistory.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="text-center">Nenhum histórico de jogo disponível</td></tr>';
+          return;
+        }
+
+        // Aplicar filtros
+        const now = new Date();
+        switch (filter) {
+          case "today":
+            filteredHistory = gameHistory.filter((game) => {
+              const gameDate = new Date(game.endedAt);
+              return gameDate.toDateString() === now.toDateString();
+            });
+            break;
+          case "week":
+            const weekAgo = new Date(now.setDate(now.getDate() - 7));
+            filteredHistory = gameHistory.filter((game) => new Date(game.endedAt) > weekAgo);
+            break;
+          case "month":
+            const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+            filteredHistory = gameHistory.filter((game) => new Date(game.endedAt) > monthAgo);
+            break;
+        }
+
+        // Verificar se o histórico filtrado está vazio
+        if (filteredHistory.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="text-center">Nenhum jogo encontrado com este filtro</td></tr>';
+          return;
+        }
+
+        // Gerar HTML da tabela
+        tbody.innerHTML = filteredHistory
+          .map(
+            (game) => `
+          <tr>
+            <td>${game.id?.substring(0, 8) || "N/A"}</td>
+            <td>${game.endedAt ? new Date(game.endedAt).toLocaleString() : "N/A"}</td>
+            <td>${game.players?.map((p) => p.name).join(" vs ") || "N/A"}</td>
+            <td>
+              ${game.winner ? `<span class="badge bg-success">${game.winner?.name || "Desconhecido"}</span>` : "N/A"}
+            </td>
+            <td>${game.finalPot || 0}</td>
+            <td>${game.winner?.winningHand || "N/A"}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-light" onclick="showHistoryDetails('${game.id}')">
+                Detalhes
+              </button>
+            </td>
+          </tr>
+        `,
+          )
+          .join("");
+      }
+
+      // Função para mostrar detalhes de um jogo histórico
+      function showHistoryDetails(gameId) {
+        const game = gameHistory.find((g) => g.id === gameId);
+        if (!game) return;
+
+        const modal = new bootstrap.Modal(document.getElementById("historyDetailsModal"));
+        const content = document.getElementById("historyDetailsContent");
+
+        content.innerHTML = `
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">Informações do Jogo</div>
+                <div class="card-body">
+                  <p><strong>Iniciado:</strong> ${game.createdAt ? new Date(game.createdAt).toLocaleString() : "N/A"}</p>
+                  <p><strong>Finalizado:</strong> ${game.endedAt ? new Date(game.endedAt).toLocaleString() : "N/A"}</p>
+                  <p><strong>Duração:</strong> ${game.createdAt && game.endedAt ? formatTime((new Date(game.endedAt) - new Date(game.createdAt)) / 1000) : "N/A"}</p>
+                  <p><strong>Pot Final:</strong> ${game.finalPot || 0}</p>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-header">Jogadores</div>
+                <div class="card-body">
+                  ${
+                    game.players
+                      ? game.players
+                          .map(
+                            (player) => `
+                    <div class="player-info">
+                      <div class="player-avatar">${player.name ? player.name.charAt(0) : "?"}</div>
+                      <div class="player-stats">
+                        <p class="player-name">
+                          ${player.name || "Jogador desconhecido"}
+                          ${game.winner && player.id === game.winner.id ? '<span class="badge bg-success">Vencedor</span>' : ""}
+                        </p>
+                        <p class="player-chips">Fichas Finais: ${player.chips || 0}</p>
+                      </div>
+                    </div>
+                  `,
+                          )
+                          .join("")
+                      : "<p>Informações dos jogadores não disponíveis</p>"
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">Mão Vencedora</div>
+                <div class="card-body">
+                  <p><strong>Jogador:</strong> ${game.winner?.name || "Desconhecido"}</p>
+                  <p><strong>Mão:</strong> ${game.winner?.winningHand || "Não disponível"}</p>
+                  <p><strong>Descrição:</strong> ${game.winner?.handDescription || "Não disponível"}</p>
+                  
+                  <div class="card-pool mt-3">
+                    <h6>Cartas Finais</h6>
+                    <div class="card-display">
+                      ${
+                        game.finalCommunityCards && game.finalCommunityCards.length > 0
+                          ? game.finalCommunityCards
+                              .map(
+                                (card) => `
+                          <span class="${card.suit === "♥" || card.suit === "♦" ? "card-hearts" : "card-spades"}">
+                            ${card.rank}${card.suit}
+                          </span>
+                        `,
+                              )
+                              .join(" ")
+                          : "Não disponível"
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-header">Histórico de Rodadas</div>
+                <div class="card-body move-history">
+                  ${
+                    game.roundHistory && game.roundHistory.length > 0
+                      ? game.roundHistory
+                          .map(
+                            (round, index) => `
+                      <div class="move-item">
+                        <strong>Rodada ${round.number || index + 1}</strong><br>
+                        ${
+                          game.players
+                            ? game.players
+                                .map(
+                                  (player, playerIndex) => `
+                          ${player.name || "Jogador " + (playerIndex + 1)}: ${formatChipsChange(round.results ? round.results[playerIndex] || 0 : 0)}
+                        `,
+                                )
+                                .join("<br>")
+                            : "Sem dados de jogadores"
+                        }
+                      </div>
+                    `,
+                          )
+                          .join("")
+                      : "<p>Nenhum histórico de rodadas disponível</p>"
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        modal.show();
+      }
+
+      // Função auxiliar para formatar tempo
+      function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}m ${remainingSeconds}s`;
+      }
+
+      // Adicionar event listeners para filtros do histórico
+      document.querySelectorAll("[data-history-filter]").forEach((elem) => {
+        elem.addEventListener("click", (e) => {
+          e.preventDefault();
+          const filter = e.target.dataset.historyFilter;
+          updateHistoryTable(filter);
+          document.getElementById("historyFilterDropdown").textContent =
+            `Filtrar por: ${elem.textContent}`;
+        });
+      });
+
+      // Show admin login modal
+      function showAdminLogin() {
+        const modal = new bootstrap.Modal(document.getElementById("adminLoginModal"));
+        modal.show();
+      }
+
+      // Login as admin
+      async function loginAdmin() {
+        const key = document.getElementById("adminKey").value;
+
+        try {
+          // Validate admin key by trying to fetch API keys
+          const response = await fetch(`${AUTH_URL}/keys`, {
+            headers: {
+              "x-admin-key": key,
+            },
+          });
+
+          if (response.ok) {
+            // Store admin key in localStorage
+            localStorage.setItem("adminKey", key);
+
+            adminKey = key;
+            document.getElementById("adminSection").style.display = "block";
+            document.getElementById("adminLoginBtn").style.display = "none";
+            document.getElementById("adminLogoutBtn").style.display = "inline-block";
+
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById("adminLoginModal")).hide();
+
+            // Load API keys
+            loadApiKeys();
+
+            // Show success message
+            showToast("Login administrativo realizado com sucesso!", "success");
+          } else {
+            const data = await response.json();
+            throw new Error(data.error || "Chave administrativa inválida");
+          }
+        } catch (error) {
+          showToast(error.message, "error");
+        }
+      }
+
+      // Logout admin
+      function logoutAdmin() {
+        // Remove admin key from localStorage
+        localStorage.removeItem("adminKey");
+
+        adminKey = null;
+        document.getElementById("adminSection").style.display = "none";
+        document.getElementById("adminLoginBtn").style.display = "inline-block";
+        document.getElementById("adminLogoutBtn").style.display = "none";
+        showToast("Logout administrativo realizado com sucesso!", "success");
+      }
+
+      // Load API keys
+      async function loadApiKeys() {
+        if (!adminKey) return;
+
+        try {
+          const response = await fetch(`${AUTH_URL}/keys`, {
+            headers: {
+              "x-admin-key": adminKey,
+            },
+          });
+
+          if (!response.ok) throw new Error("Erro ao carregar API keys");
+
+          const data = await response.json();
+          const tbody = document.getElementById("apiKeysTableBody");
+
+          // Verificar se data.keys existe e é um array
+          if (!data.keys || !Array.isArray(data.keys)) {
+            tbody.innerHTML =
+              '<tr><td colspan="5" class="text-center">Nenhuma API key encontrada</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = data.keys
+            .map(
+              (key) => `
+            <tr>
+              <td>${key.botName}</td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <code class="me-2">${key.key.substring(0, 16)}...</code>
+                  <button class="btn btn-sm btn-outline-light" onclick="copyToClipboard('${key.key}')">
+                    Copiar
+                  </button>
+                </div>
+              </td>
+              <td>${new Date(key.createdAt).toLocaleString()}</td>
+              <td>${key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : "Nunca usado"}</td>
+              <td>
+                <button class="btn btn-sm btn-danger" onclick="revokeApiKey('${key.key}')">
+                  Revogar
+                </button>
+              </td>
+            </tr>
+          `,
+            )
+            .join("");
+        } catch (error) {
+          showToast(error.message, "error");
+          tbody.innerHTML =
+            '<tr><td colspan="5" class="text-center">Erro ao carregar API keys</td></tr>';
+        }
+      }
+
+      // Show new key modal
+      function showNewKeyModal() {
+        if (!adminKey) return;
+        const modal = new bootstrap.Modal(document.getElementById("newKeyModal"));
+        modal.show();
+      }
+
+      // Generate new API key
+      async function generateApiKey() {
+        if (!adminKey) return;
+
+        const botName = document.getElementById("botName").value;
+        if (!botName) {
+          showToast("Nome do bot é obrigatório", "error");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${AUTH_URL}/generate-key`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-admin-key": adminKey,
+            },
+            body: JSON.stringify({ botName }),
+          });
+
+          if (!response.ok) throw new Error("Erro ao gerar API key");
+
+          const data = await response.json();
+
+          // Close modal
+          bootstrap.Modal.getInstance(document.getElementById("newKeyModal")).hide();
+
+          // Show success message with the new key
+          showToast("API key gerada com sucesso!", "success");
+
+          // Copy to clipboard
+          copyToClipboard(data.apiKey);
+
+          // Reload API keys
+          loadApiKeys();
+        } catch (error) {
+          showToast(error.message, "error");
+        }
+      }
+
+      // Revoke API key
+      async function revokeApiKey(apiKey) {
+        if (!adminKey) return;
+
+        if (!confirm("Tem certeza que deseja revogar esta API key?")) return;
+
+        try {
+          const response = await fetch(`${AUTH_URL}/revoke-key/${apiKey}`, {
+            method: "DELETE",
+            headers: {
+              "x-admin-key": adminKey,
+            },
+          });
+
+          if (!response.ok) throw new Error("Erro ao revogar API key");
+
+          showToast("API key revogada com sucesso!", "success");
+          loadApiKeys();
+        } catch (error) {
+          showToast(error.message, "error");
+        }
+      }
+
+      // Utility function to copy to clipboard
+      function copyToClipboard(text) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            showToast("Copiado para a área de transferência!", "success");
+          })
+          .catch(() => {
+            showToast("Erro ao copiar para a área de transferência", "error");
+          });
+      }
+
+      // Toast notification system
+      function showToast(message, type = "info") {
+        const toastContainer = document.getElementById("toastContainer") || createToastContainer();
+
+        const toast = document.createElement("div");
+        toast.className = `toast align-items-center text-white bg-${type === "error" ? "danger" : type} border-0`;
+        toast.setAttribute("role", "alert");
+        toast.setAttribute("aria-live", "assertive");
+        toast.setAttribute("aria-atomic", "true");
+
+        toast.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">
+              ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        `;
+
+        toastContainer.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Remove toast after it's hidden
+        toast.addEventListener("hidden.bs.toast", () => {
+          toast.remove();
+        });
+      }
+
+      // Create toast container if it doesn't exist
+      function createToastContainer() {
+        const container = document.createElement("div");
+        container.id = "toastContainer";
+        container.className = "toast-container position-fixed bottom-0 end-0 p-3";
+        document.body.appendChild(container);
+        return container;
+      }
+
+      // Função para buscar estatísticas dos jogos
+      async function fetchGameStats() {
+        try {
+          const response = await fetch(`${API_URL}/stats`);
+          if (!response.ok) throw new Error("Erro ao buscar estatísticas");
+
+          const stats = await response.json();
+
+          // Atualizar elementos na interface
+          document.getElementById("totalGamesPlayed").textContent = stats.completedGames;
+          document.getElementById("totalHandsPlayed").textContent = stats.completedGames; // Cada jogo é uma mão
+          document.getElementById("biggestPot").textContent = stats.biggestPot;
+          document.getElementById("averageGameTime").textContent = formatTime(
+            stats.averageGameDuration,
+          );
+        } catch (error) {
+          console.error("Erro ao buscar estatísticas:", error);
+        }
       }
     </script>
   </body>

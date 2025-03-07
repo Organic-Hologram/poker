@@ -34,3 +34,9 @@ file://path/to/poker-game/test.html
 ```
 
 ## Game Rules
+
+## TODO
+
+- Comunication by websocket/socket.io or webRTC (Study)m between client (eliza) and server
+- Add a game frontend
+- Add thinking/context (conversation with ai to do the output game decision) of eliza to dashboard

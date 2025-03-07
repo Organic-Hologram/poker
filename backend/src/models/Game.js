@@ -1,6 +1,8 @@
 const Deck = require("./Deck");
 const { v4: uuidv4 } = require("uuid");
 const HandEvaluator = require("./HandEvaluator");
+const { dbAsync } = require("../database/config");
+const { gameLogger } = require("../utils/logger");
 
 class Game {
   constructor() {
@@ -47,6 +49,9 @@ class Game {
       return false;
     }
 
+    // Log original game state
+    console.log(`Game ${this.id}: Changing state from ${this.gameState} to preflop`);
+
     this.gameState = "preflop";
     this.deck = new Deck();
     this.communityCards = [];
@@ -55,6 +60,9 @@ class Game {
     this.winner = null;
     this.winningHand = null;
     this.playersActed = 0; // Initialize players acted
+
+    // Log confirmation of state change
+    console.log(`Game ${this.id}: State is now ${this.gameState}`);
 
     // Deal cards to players
     this.players.forEach((player) => {
@@ -129,7 +137,7 @@ class Game {
     };
   }
 
-  handleMove(playerId, action, amount = 0) {
+  handleAction(playerId, action, amount = 0) {
     if (this.isGameOver) {
       return { success: false, message: "Game is over. Start a new game to continue playing." };
     }
@@ -150,13 +158,25 @@ class Game {
       };
     }
 
+    // Registra a ação no histórico de rodadas em memória
+    const roundAction = {
+      playerId,
+      playerName: player.name,
+      action: action.toLowerCase(),
+      amount: action.toLowerCase() === "raise" ? amount : this.currentBet - player.currentBet,
+      state: this.gameState,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.roundHistory.push(roundAction);
+
     switch (action.toLowerCase()) {
       case "fold":
         player.fold();
         this.lastAction = "fold";
         this.playersActed++;
         this.nextTurn();
-        return { success: true, message: "Player folded" };
+        return { success: true, message: "Player folded", roundAction };
 
       case "call":
         const callAmount = this.currentBet - player.currentBet;
@@ -167,7 +187,7 @@ class Game {
         this.lastAction = "call";
         this.playersActed++;
         this.nextTurn();
-        return { success: true, message: "Call successful" };
+        return { success: true, message: "Call successful", roundAction };
 
       case "raise":
         if (amount < this.currentBet * 2) {
@@ -182,7 +202,7 @@ class Game {
         this.lastRaiseAmount = amount;
         this.playersActed = 1; // Reset players acted when someone raises
         this.nextTurn();
-        return { success: true, message: "Raise successful" };
+        return { success: true, message: "Raise successful", roundAction };
 
       default:
         return { success: false, message: "Invalid action" };
@@ -284,8 +304,15 @@ class Game {
 
   handleWinner(winner, handEvaluation) {
     this.winner = winner;
-    this.winningHand = handEvaluation.handName;
-    this.winningHandDescription = handEvaluation.description;
+
+    // Verifica se handEvaluation é uma string (caso de fold) ou um objeto (avaliação de mão)
+    if (typeof handEvaluation === "string") {
+      this.winningHand = "fold";
+      this.winningHandDescription = handEvaluation;
+    } else {
+      this.winningHand = handEvaluation.handName;
+      this.winningHandDescription = handEvaluation.description;
+    }
 
     // Store final hands before clearing them
     this.finalHands = this.players.map((p) => ({
@@ -293,36 +320,92 @@ class Game {
       id: p.id,
       hand: [...p.hand],
       chips: p.chips, // Include chips in final hands
+      currentBet: p.currentBet,
+      isFolded: p.isFolded,
     }));
-    console.log("finalHands", this.finalHands);
 
     // Store final community cards and pot
     this.finalCommunityCards = [...this.communityCards];
     this.finalPot = this.pot; // Store the final pot amount BEFORE clearing it
 
-    // Calculate chips change for this round
-    const roundResult = {
-      number: this.roundHistory.length + 1,
-      results: this.players.map((player) => {
-        if (player.id === winner.id) {
-          return this.pot;
-        } else {
-          return -player.currentBet;
-        }
-      }),
+    // Registrar resultado final no histórico de rodadas em memória
+    const finalAction = {
+      playerId: winner.id,
+      playerName: winner.name,
+      action: "win",
+      amount: this.pot,
+      state: "game_over",
+      timestamp: new Date().toISOString(),
+      winningHand: this.winningHand,
+      winningHandDescription: this.winningHandDescription,
     };
 
-    // Add round to history
-    this.roundHistory.push(roundResult);
+    this.roundHistory.push(finalAction);
 
     winner.chips += this.pot; // Update winner's chips
     this.pot = 0; // Clear the pot AFTER storing finalPot
     this.gameState = "game_over";
     this.isGameOver = true;
+  }
 
-    // Reset for next hand
-    this.communityCards = [];
-    this.players.forEach((p) => p.resetHand());
+  static async getAllGames() {
+    try {
+      const games = await dbAsync.all(
+        `SELECT g.*, 
+          GROUP_CONCAT(DISTINCT p.id) as player_ids,
+          GROUP_CONCAT(DISTINCT p.name) as player_names,
+          GROUP_CONCAT(DISTINCT p.chips) as player_chips,
+          GROUP_CONCAT(DISTINCT p.is_ready) as player_ready,
+          GROUP_CONCAT(DISTINCT p.current_bet) as player_bets,
+          GROUP_CONCAT(DISTINCT p.is_folded) as player_folded
+        FROM games g
+        LEFT JOIN players p ON g.id = p.game_id
+        WHERE g.state != 'ended'
+        GROUP BY g.id`,
+      );
+
+      return games.map((game) => ({
+        id: game.id,
+        players: game.player_ids
+          ? game.player_ids.split(",").map((id, index) => ({
+              id: id,
+              name: game.player_names
+                ? game.player_names.split(",")[index] || `Player ${index + 1}`
+                : `Player ${index + 1}`,
+              chips: game.player_chips ? parseInt(game.player_chips.split(",")[index]) || 0 : 0,
+              isReady: game.player_ready_states
+                ? game.player_ready_states.split(",")[index] === "1"
+                : false,
+              currentBet: game.player_bets ? parseInt(game.player_bets.split(",")[index]) || 0 : 0,
+              isFolded: game.player_folded ? game.player_folded.split(",")[index] === "1" : false,
+            }))
+          : [],
+        gameState: game.state,
+        pot: game.pot,
+        isGameOver: game.status === "ended",
+        lastUpdateTime: game.last_update,
+        currentBet: game.current_bet,
+        lastAction: game.last_action,
+        lastRaiseAmount: game.last_raise_amount,
+        currentPlayerIndex: game.current_player,
+        communityCards: JSON.parse(game.community_cards || "[]"),
+        roundHistory: JSON.parse(game.round_history || "[]"),
+        winner: game.winner_id
+          ? {
+              id: game.winner_id,
+              name: game.winner_name,
+              winningHand: game.winning_hand,
+              handDescription: game.winning_hand_description,
+            }
+          : null,
+        finalHands: JSON.parse(game.final_hands || "[]"),
+        finalCommunityCards: JSON.parse(game.final_community_cards || "[]"),
+        finalPot: game.final_pot,
+      }));
+    } catch (error) {
+      gameLogger.error("Error getting all games:", error);
+      return [];
+    }
   }
 }
 
