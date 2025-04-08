@@ -114,17 +114,19 @@ class Game {
       return {
         ...baseState,
         isGameOver: true,
-        winner: {
-          name: this.winner.name,
-          id: this.winner.id,
-          chips: this.winner.chips,
-        },
+        winner: this.winner
+          ? {
+              name: this.winner.name,
+              id: this.winner.id,
+              chips: this.winner.chips,
+            }
+          : null,
         winningHand: this.winningHand,
         handDescription: this.winningHandDescription,
         finalCommunityCards: this.finalCommunityCards,
         allHands: this.finalHands,
         roundHistory: this.roundHistory,
-        finalPot: this.finalPot, // Include finalPot in baseState
+        finalPot: this.finalPot,
       };
     }
 
